@@ -1,70 +1,119 @@
-import React, { useState } from "react";
-import useInputChange from "./useInputChange";
+import React, { useMemo, useState } from "react";
+//1 . necessary : re-render
+//2 . unnecessary : re-render
+const VeryHeavyComponent = ({ data }: { data: number[] | number }) => {
+  console.log("VeryHeavyComponent render1");
+  return (
+    <div className="grid grid-cols-12 gap-5">
+      {Array(500)
+        .fill(0)
+        .map((item, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-center w-20 h-20 bg-blue-500"
+          >
+            {index + 1}
+          </div>
+        ))}
+    </div>
+  );
+};
 
-const tabClassName = "px-6 py-3 text-xs rounded cursor-pointer bg-gray-100";
-const tabActiveClassName = "text-white bg-blue-500 pointer-events-none";
-function App() {
-  const [sortedType, setSorttedType] = useState<"desc" | "asc">("desc");
-  type SortedData = "desc" | "asc";
-  const hanldeSortData = (value: SortedData) => {
-    setSorttedType(value);
-  };
-  // const [activeTab, setACtiveTab] = useState<"tab1" | "tab2">("tab1");
-  // const handleClickDesc = () => {
-  //   setSorttedType("desc");
-  //   setACtiveTab("tab1");
-  // };
-  // const handleClickAsc = () => {
-  //   setSorttedType("asc");
-  //   setACtiveTab("tab2");
-  // };
-  const { handleInputChange } = useInputChange("evondev");
+const VeryHeavyComponent2 = () => {
+  console.log("VeryHeavyComponent render2");
+  return (
+    <div className="grid grid-cols-12 gap-5">
+      {Array(500)
+        .fill(0)
+        .map((item, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-center w-20 h-20 bg-blue-500"
+          >
+            {index + 1}
+          </div>
+        ))}
+    </div>
+  );
+};
 
+const VeryHeavyComponentMemo = React.memo(VeryHeavyComponent);
+// const data = [1, 2, 3, 4, 5]; c1 đưa ra ngoài
+const App = () => {
+  const [counter, setCounter] = useState(0);
+  const data = useMemo(() => [1, 2, 3, 4, 5], []);
   return (
     <div className="App">
-      <div className="flex items-center p-5 gap-x-5">
-        <TabItem
-          isActive={sortedType === "desc"}
-          onClick={() => hanldeSortData("desc")}
-        >
-          Sort Desc
-        </TabItem>
-        <TabItem
-          isActive={sortedType === "asc"}
-          onClick={() => hanldeSortData("asc")}
-        >
-          Sort Asc
-        </TabItem>
-        <input type="text" name="fullname" onChange={handleInputChange} />
-        {/* <div
-          className={`${tabClassName}${
-            activeTab === "tab2" ? tabActiveClassName : "bg-gray-100"
-          }`}
-          onClick={handleClickAsc}
-        >
-          Sort ASC
-        </div> */}
-      </div>
+      <span>{counter}</span>
+      <button
+        onClick={() => setCounter(counter + 1)}
+        className="p-3 text-white bg-blue-500 rounded-lg"
+      >
+        +
+      </button>
+      <VeryHeavyComponentMemo data={data}></VeryHeavyComponentMemo>
+      {/* <ComponentWithMouseMove2
+        left={<VeryHeavyComponent></VeryHeavyComponent>}
+        right={<VeryHeavyComponent2></VeryHeavyComponent2>}
+      >
+        <Counter></Counter>
+      </ComponentWithMouseMove2> */}
+
+      {/*TH3 chua toi uu :  <VeryHeavyComponent></VeryHeavyComponent>
+      <Counter></Counter>
+      <VeryHeavyComponent2></VeryHeavyComponent2> */}
+      {/*TH2 : <ComponentWithMouseMove>
+        <Counter></Counter>
+        <VeryHeavyComponent></VeryHeavyComponent>
+      </ComponentWithMouseMove> */}
     </div>
   );
-}
-interface TabItemProps {
-  children: React.ReactNode;
-  isActive: boolean;
-  onClick: () => void;
-}
-function TabItem({
-  children,
-  isActive = false,
-  onClick = () => null,
-}: TabItemProps) {
+};
+
+// 1. tách logic component ra riêng nếu nó không liên quan với nhau
+const Counter = () => {
+  const [counter, setCounter] = useState(0);
   return (
-    <div
-      className={`${tabClassName}${isActive ? tabActiveClassName : ""}`}
-      onClick={isActive ? undefined : onClick}
-    >
+    <>
+      <span>{counter}</span>
+      <button onClick={() => setCounter(counter + 1)}>+</button>
+    </>
+  );
+};
+
+//2. tạo component sử dụng props children\
+const ComponentWithMouseMove = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [mouseValue, setMouseValue] = useState(0);
+  const handleMouseMove = (e: any) => {
+    setMouseValue(e.clientX);
+  };
+  return <div onMouseMove={handleMouseMove}>{children}</div>;
+};
+// 3. tạo component sử dụng các props khác nhau nhưng truyền vào là 1 component
+const ComponentWithMouseMove2 = ({
+  left,
+  right,
+  children,
+}: {
+  left: React.ReactNode;
+  right: React.ReactNode;
+  children: React.ReactNode;
+}) => {
+  const [mouseValue, setMouseValue] = useState(0);
+  const handleMouseMove = (e: any) => {
+    setMouseValue(e.clientX);
+  };
+  return (
+    <div onMouseMove={handleMouseMove}>
+      {left}
       {children}
+      {right}
     </div>
   );
-}
+};
+// 4. Những giá trị không phải primitives value satring boolean number []
 export default App;
